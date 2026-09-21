@@ -1,0 +1,20 @@
+# ---------------------------------------------------------------------------
+# M3Design — fichiers non formatés par Prettier
+# ---------------------------------------------------------------------------
+# Prettier lit également .gitignore : node_modules, dist, .env*, .dev.vars* et
+# .wrangler/ sont donc déjà exclus.
+
+# Lockfile généré par pnpm : son format appartient à pnpm, ne pas le reformater.
+pnpm-lock.yaml
+
+# Artefacts générés
+*.tsbuildinfo
+coverage/
+
+# Assets binaires (aucun formatage possible)
+public/images/
+src/assets/
+
+# Backend Cloudflare (étape ultérieure)
+worker/dist/
+.wrangler/

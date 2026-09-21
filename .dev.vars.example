@@ -1,0 +1,38 @@
+# ---------------------------------------------------------------------------
+# M3Design — configuration et secrets du SERVEUR (Worker Cloudflare)
+# ---------------------------------------------------------------------------
+# Fichier modèle : il ne contient AUCUNE valeur.
+#   - développement local : copier en .dev.vars (ignoré par Git) puis renseigner.
+#   - production : ne jamais committer de valeur ; utiliser la commande
+#     wrangler secret put <NOM> pour les secrets, et la section vars de
+#     wrangler.jsonc pour le non sensible.
+#
+# Préparé pour l'étape backend. Les noms sont provisoires : ils seront figés
+# lors du choix du fournisseur WhatsApp.
+
+# --- Environnement ---
+# Valeurs attendues : development | staging | production
+ENVIRONMENT=
+
+# --- Vérification du numéro par code reçu sur WhatsApp ---
+# Fournisseur chargé de l'envoi des codes.
+#   - console : fournisseur fictif, journalise le code. RÉSERVÉ AU DÉVELOPPEMENT
+#     ET AUX TESTS. Le serveur doit REFUSER cette valeur lorsque ENVIRONMENT
+#     vaut production : aucune vérification factice ne doit aboutir en ligne.
+#   - autre valeur : fournisseur réel, restant à sélectionner.
+WHATSAPP_PROVIDER=
+
+# Secret servant au hachage des codes et à la signature des jetons de
+# vérification. Chaîne aléatoire longue, distincte par environnement.
+OTP_SECRET=
+
+# Durée de validité d'un code, en secondes.
+OTP_TTL_SECONDS=
+
+# Nombre maximal de tentatives de saisie pour un même code.
+OTP_MAX_ATTEMPTS=
+
+# --- Accès au fournisseur WhatsApp (noms à confirmer selon le fournisseur) ---
+WHATSAPP_ACCESS_TOKEN=
+WHATSAPP_PHONE_NUMBER_ID=
+WHATSAPP_VERIFY_TOKEN=
