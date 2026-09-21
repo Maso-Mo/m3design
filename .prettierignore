@@ -11,10 +11,12 @@ pnpm-lock.yaml
 *.tsbuildinfo
 coverage/
 
+# Types du runtime Workers, générés par `pnpm generate:types` (wrangler)
+worker-configuration.d.ts
+
 # Assets binaires (aucun formatage possible)
 public/images/
 src/assets/
 
-# Backend Cloudflare (étape ultérieure)
-worker/dist/
+# État local de Cloudflare (wrangler) — également dans .gitignore
 .wrangler/

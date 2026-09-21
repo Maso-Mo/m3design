@@ -4,10 +4,12 @@ Site vitrine d'architecture : une seule page publique (`/`), avec navigation par
 ancres (Hero, À propos, Services, Projets, Processus, Garantie, Équipe, Contact).
 
 Pile technique : React 19, Vite 8, TypeScript 6, Tailwind CSS 4, GSAP pour les
-animations de scroll, Oxlint et Prettier.
+animations de scroll, Oxlint et Prettier. Côté serveur : Cloudflare Workers et
+Hono, avec la base D1 prévue à l'étape suivante.
 
-> État actuel : squelette du projet. Les sections visuelles, les contenus et le
-> backend Cloudflare ne sont pas encore implémentés.
+> État actuel : squelette du projet. Les sections visuelles et les contenus ne
+> sont pas encore implémentés ; le socle du backend (Worker Hono, route
+> `/api/health`, configuration de déploiement) est en place.
 
 ## Prérequis
 
@@ -27,17 +29,24 @@ corepack enable  # optionnel : respecte le champ packageManager
 pnpm install
 ```
 
+pnpm 12 n'exécute aucun script d'installation par défaut. `pnpm-workspace.yaml`
+autorise les seuls paquets qui en ont besoin (`esbuild` et `workerd`, qui
+installent leur binaire natif) ; tout autre paquet reste bloqué. Ajouter une ligne
+à cette liste est une décision de sécurité : vérifier le script avant d'autoriser.
+
 ## Commandes disponibles
 
-| Commande            | Effet                                                                |
-| ------------------- | -------------------------------------------------------------------- |
-| `pnpm dev`          | Serveur de développement Vite (HMR)                                  |
-| `pnpm build`        | Vérification des types (`tsc -b`) puis build de production (`dist/`) |
-| `pnpm preview`      | Sert localement le build de production                               |
-| `pnpm typecheck`    | Vérification des types uniquement, sans production de fichiers       |
-| `pnpm lint`         | Analyse statique Oxlint                                              |
-| `pnpm format`       | Formate le dépôt avec Prettier (écriture)                            |
-| `pnpm format:check` | Vérifie le formatage sans écrire (usage CI)                          |
+| Commande              | Effet                                                                  |
+| --------------------- | ---------------------------------------------------------------------- |
+| `pnpm dev`            | Développement : front (HMR) et API (`/api/*`) dans le même processus   |
+| `pnpm build`          | Types puis build : `dist/client/` (front) et `dist/m3design/` (Worker) |
+| `pnpm preview`        | Exécute le build dans le runtime Workers, localement                   |
+| `pnpm deploy`         | Build puis envoi sur Cloudflare (nécessite un compte configuré)        |
+| `pnpm generate:types` | Régénère les types du runtime Workers depuis `wrangler.jsonc`          |
+| `pnpm typecheck`      | Vérification des types uniquement, sans production de fichiers         |
+| `pnpm lint`           | Analyse statique Oxlint                                                |
+| `pnpm format`         | Formate le dépôt avec Prettier (écriture)                              |
+| `pnpm format:check`   | Vérifie le formatage sans écrire (usage CI)                            |
 
 ## Qualité du code : deux outils, deux rôles
 
@@ -82,7 +91,32 @@ src/
                           (base de la V2 administrable)
   styles/globals.css      point d'entrée Tailwind
   types/                  types partagés
+worker/                   API Cloudflare Workers (Hono) — voir worker/README.md
+  src/routes/             une route par domaine (health pour l'instant)
+  src/lib/                utilitaires de l'API (format des erreurs)
+wrangler.jsonc            configuration du Worker et des assets statiques
+tsconfig.worker.json      TypeScript du Worker (strict, sans types DOM)
+worker-configuration.d.ts types du runtime Workers, générés par Wrangler
 ```
+
+## Backend et déploiement
+
+L'API est un Worker Cloudflare écrit avec Hono, servi sous `/api/*` ; en
+production, le même Worker sert aussi le front statique. Conventions et détails :
+`worker/README.md`.
+
+- `pnpm dev` suffit : le plugin Cloudflare pour Vite exécute le Worker dans le
+  même processus que Vite. Aucun proxy ni second serveur n'est nécessaire.
+- Une route `/api/*` inexistante répond en JSON (`404`) et jamais avec la page
+  HTML du front ; toute autre URL inconnue reçoit `index.html` (page unique).
+- Avant un premier déploiement, côté Cloudflare et hors du dépôt :
+  authentification (`wrangler login` ou `CLOUDFLARE_API_TOKEN`), création du
+  Worker, pose des secrets (`wrangler secret put ENVIRONMENT`), puis vérification
+  de la configuration sans rien envoyer :
+  `pnpm build && pnpm exec wrangler deploy --dry-run`.
+- `wrangler.jsonc` ne contient aucun identifiant de compte, identifiant de base
+  ni secret : ces valeurs sont propres à chaque environnement et restent hors du
+  dépôt.
 
 ## Organisation des images
 
@@ -99,7 +133,8 @@ Cloudflare (`.wrangler/`).
 ## Suite prévue
 
 1. Fondations : contenus locaux typés et styles de base.
-2. Backend : Cloudflare Workers, Hono et D1.
+2. Backend : fondations en place (Worker Hono, route `/api/health`, configuration
+   de déploiement). Restent la base D1, les routes métier et leur validation.
 3. Formulaire sécurisé : vérification du numéro par code reçu sur WhatsApp,
    contrôlée côté serveur. Le fournisseur reste à sélectionner ; un fournisseur
    fictif est réservé au développement et aux tests, et refusé en production.

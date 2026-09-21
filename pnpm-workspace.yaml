@@ -1,0 +1,14 @@
+# ---------------------------------------------------------------------------
+# M3Design — configuration pnpm du projet
+# ---------------------------------------------------------------------------
+# pnpm 12 n'exécute AUCUN script d'installation par défaut : chaque paquet
+# devant en lancer un doit être autorisé explicitement ici.
+#
+# - esbuild : installe son binaire natif (empaquetage du Worker et des assets).
+# - workerd : installe le runtime Cloudflare utilisé par wrangler en local.
+#
+# Tout autre paquet reste bloqué : si pnpm signale un jour un nouveau paquet en
+# attente, vérifier ce que fait son script avant de l'autoriser ici.
+allowBuilds:
+  esbuild: true
+  workerd: true

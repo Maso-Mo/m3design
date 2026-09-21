@@ -1,0 +1,51 @@
+{
+  // ---------------------------------------------------------------------------
+  // M3Design — configuration du Worker Cloudflare (API + front statique)
+  // ---------------------------------------------------------------------------
+  // Ce fichier est VERSIONNÉ : il ne doit contenir aucun identifiant de compte,
+  // aucun identifiant de base de données ni aucun secret. En local, les secrets
+  // vont dans .dev.vars (ignoré par Git, modèle : .dev.vars.example) ; en ligne,
+  // ils sont posés avec `wrangler secret put <NOM>`.
+  "$schema": "./node_modules/wrangler/config-schema.json",
+
+  // Nom du Worker : c'est aussi le nom de l'environnement Vite créé par le
+  // plugin Cloudflare pour Vite.
+  "name": "m3design",
+
+  // Point d'entrée de l'API (Hono).
+  "main": "./worker/src/index.ts",
+
+  // Date de compatibilité du runtime. À figer : ne la faire évoluer qu'après
+  // lecture des notes de version, car certains comportements changent.
+  "compatibility_date": "2026-09-21",
+
+  "assets": {
+    // Le front est une page unique : toute URL inconnue renvoie index.html, le
+    // routage (/devis/confirmation, /admin/*) étant assuré côté client.
+    // Le build (vite build) renseigne assets.directory automatiquement.
+    "not_found_handling": "single-page-application",
+
+    // Le Worker est invoqué AVANT les assets statiques sur /api/* : une route
+    // d'API inexistante reçoit donc toujours une réponse JSON, jamais index.html.
+    "run_worker_first": ["/api/*"],
+
+    // Permet au Worker de servir lui-même les assets (repli hors API).
+    "binding": "ASSETS",
+  },
+
+  // Journaux et traces du Worker dans le tableau de bord Cloudflare.
+  "observability": { "enabled": true },
+
+  // Base de données : à décommenter et compléter lors de l'étape D1, une fois la
+  // base créée sur le compte Cloudflare (l'identifiant n'a rien à faire ici
+  // avant cette étape, et jamais de valeur d'un autre environnement).
+  //
+  // "d1_databases": [
+  //   {
+  //     "binding": "DB",
+  //     "database_name": "m3design",
+  //     "database_id": "<identifiant de la base>",
+  //     "migrations_dir": "worker/migrations"
+  //   }
+  // ]
+}
