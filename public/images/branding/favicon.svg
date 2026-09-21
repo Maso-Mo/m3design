@@ -1,0 +1,25 @@
+
+<svg xmlns="http://www.w3.org/2000/svg"
+     viewBox="0 0 64 64"
+     width="64"
+     height="64">
+  <title>M3Design</title>
+
+  <g fill="#FF1018">
+    <!-- Lettre M -->
+    <path d="M3 12H23C28 12 31 16 31 21V52H22V24C22 22 21 21 19 21H18V52H10V21H7V52H3V12Z"/>
+
+    <!-- Barre inférieure du M -->
+    <path d="M3 55H31V60H3Z"/>
+
+    <!-- Chiffre 3 -->
+    <path d="M34 12H49C58 12 62 17 62 24
+             C62 28 60 31 56 33
+             C60 35 62 38 62 43
+             C62 51 57 55 49 55H34V46H48
+             C52 46 53 44 53 41
+             C53 38 51 37 48 37H39V29H48
+             C51 29 53 28 53 25
+             C53 22 51 21 48 21H34V12Z"/>
+  </g>
+</svg>
