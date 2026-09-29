@@ -14,7 +14,10 @@
     "preview": "vite preview",
     "deploy": "pnpm build && wrangler deploy",
     "generate:types": "wrangler types",
+    "db:migrate:local": "wrangler d1 migrations apply DB --local",
     "typecheck": "tsc -b --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "lint": "oxlint",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
@@ -44,6 +47,7 @@
     "tailwindcss": "^4.3.3",
     "typescript": "~6.0.2",
     "vite": "^8.3.0",
+    "vitest": "^5.0.1",
     "wrangler": "^4.135.0"
   }
 }

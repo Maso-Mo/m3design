@@ -1,7 +1,21 @@
 import { Hono } from 'hono'
 import { apiError } from './lib/api-error'
+import { createContactRoute } from './routes/contact'
+import { createQuoteRoute } from './routes/devis'
 import { healthRoute } from './routes/health'
+import type { ContactRouteDependencies } from './routes/contact'
+import type { QuoteRouteDependencies } from './routes/devis'
 import type { AppEnv } from './types'
+
+/**
+ * Dépendances de l'application, injectables par les tests.
+ *
+ * Tout est facultatif : sans valeur injectée, chaque route lit l'environnement du
+ * Worker (`c.env`). Les tests fournissent une horloge contrôlée, un secret de
+ * limitation et un `fetch` factice pour le défi anti-robot : ils restent ainsi
+ * déterministes, sans réseau et sans dépendre de `.dev.vars`.
+ */
+export type AppDependencies = QuoteRouteDependencies & ContactRouteDependencies
 
 /**
  * Construit l'application Hono du Worker.
@@ -10,16 +24,20 @@ import type { AppEnv } from './types'
  * assets statiques (le build du front). Cloudflare n'invoque le Worker en
  * premier que sur /api/* : voir assets.run_worker_first dans wrangler.jsonc.
  *
- * Routes prévues, une par fichier dans src/routes/ :
- *   - /api/otp/*    envoi et vérification du code reçu sur WhatsApp
- *   - /api/contact  messages du formulaire de contact
- *   - /api/devis    demandes de devis
- *   - /api/admin/*  administration (accès protégé)
+ * Routes montées, une par fichier dans src/routes/ :
+ *   - POST /api/devis        demande de devis (formulaire simple)
+ *   - POST /api/contact      message de contact (formulaire simple)
+ *   - GET  /api/health       état de l'API
+ *
+ * Reste à écrire (voir worker/README.md) :
+ *   - /api/admin/*  administration (accès protégé).
  */
-export function createApp() {
+export function createApp(dependencies: AppDependencies = {}) {
   const app = new Hono<AppEnv>()
 
   app.route('/api', healthRoute)
+  app.route('/api', createQuoteRoute(dependencies))
+  app.route('/api', createContactRoute(dependencies))
 
   // Chemin d'API inconnu : réponse JSON, jamais la page HTML du front.
   app.notFound((c) => {

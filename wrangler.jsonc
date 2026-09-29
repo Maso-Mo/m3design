@@ -36,16 +36,72 @@
   // Journaux et traces du Worker dans le tableau de bord Cloudflare.
   "observability": { "enabled": true },
 
-  // Base de données : à décommenter et compléter lors de l'étape D1, une fois la
-  // base créée sur le compte Cloudflare (l'identifiant n'a rien à faire ici
-  // avant cette étape, et jamais de valeur d'un autre environnement).
+  // ---------------------------------------------------------------------------
+  // Traitement périodique de la file des notifications (email_outbox)
+  // ---------------------------------------------------------------------------
+  // Toutes les cinq minutes, le Worker est invoqué sur son handler `scheduled`
+  // (worker/src/scheduled.ts) : il envoie les notifications en attente, réessaie
+  // celles qui ont échoué, abandonne celles qui dépassent le plafond de tentatives
+  // et purge les notifications acceptées depuis plus de trente jours.
   //
-  // "d1_databases": [
-  //   {
-  //     "binding": "DB",
-  //     "database_name": "m3design",
-  //     "database_id": "<identifiant de la base>",
-  //     "migrations_dir": "worker/migrations"
-  //   }
-  // ]
+  // Aucune route HTTP ne déclenche d'envoi : c'est le SEUL chemin.
+  //
+  // Si l'envoi n'est pas configuré (EMAIL_PROVIDER, adresse d'expédition, clé ou
+  // binding absent), le passage est ANNULÉ avant toute écriture : les notifications
+  // restent en attente, et une ligne de journal indique le motif. Une file qui
+  // attend une configuration n'est donc jamais perdue.
+  //
+  // Cinq minutes est un compromis : assez fréquent pour qu'une demande soit
+  // signalée dans la minute qui suit, assez rare pour ne pas multiplier les
+  // invocations inutiles. La fréquence se change ici, sans toucher au code.
+  "triggers": { "crons": ["*/5 * * * *"] },
+
+  // ---------------------------------------------------------------------------
+  // Base de données D1 (SQLite hébergé par Cloudflare)
+  // ---------------------------------------------------------------------------
+  // Le binding s'appelle DB : c'est le nom utilisé dans le code (c.env.DB).
+  //
+  // Trois bases distinctes, une par environnement : développement (ci-dessous,
+  // utilisée par `pnpm dev`), prévisualisation et production (sections env). Un
+  // test ou une erreur de prévisualisation ne peut donc jamais atteindre les
+  // données de production.
+  //
+  // Les identifiants de base sont propres au compte Cloudflare : ils ne sont pas
+  // versionnés. Les valeurs ci-dessous sont des marqueurs à remplacer après
+  // `wrangler d1 create <nom>` (voir README, section Backend et déploiement).
+  // En local, wrangler crée sa propre base SQLite dans .wrangler/ (ignoré par
+  // Git) : aucune base distante n'est créée ni contactée par `pnpm dev`.
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "m3design-development",
+      "database_id": "REMPLACER_ID_BASE_DEVELOPPEMENT",
+      "migrations_dir": "worker/migrations",
+    },
+  ],
+
+  // Environnements de déploiement : chacun devient un Worker distinct
+  // (m3design-preview, m3design-production) avec sa propre base de données.
+  "env": {
+    "preview": {
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "m3design-preview",
+          "database_id": "REMPLACER_ID_BASE_PREVIEW",
+          "migrations_dir": "worker/migrations",
+        },
+      ],
+    },
+    "production": {
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "m3design-production",
+          "database_id": "REMPLACER_ID_BASE_PRODUCTION",
+          "migrations_dir": "worker/migrations",
+        },
+      ],
+    },
+  },
 }

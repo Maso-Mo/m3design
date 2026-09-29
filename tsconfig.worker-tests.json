@@ -1,0 +1,34 @@
+{
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.worker-tests.tsbuildinfo",
+    "target": "es2023",
+    "lib": ["ES2023"],
+
+    /* Les tests s'exécutent dans Node (Vitest) tout en important le code du
+       Worker : ils ont donc besoin des types de Node, en plus des types du
+       runtime Workers (worker-configuration.d.ts) fournis par `pnpm
+       generate:types`. */
+    "types": ["node"],
+    "skipLibCheck": true,
+
+    /* Bundler mode : Vitest transforme les fichiers de test comme Vite */
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+
+    /* Linting : mêmes règles que le Worker */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "erasableSyntaxOnly": true,
+    "noFallthroughCasesInSwitch": true
+  },
+  "include": [
+    "worker-configuration.d.ts",
+    "worker/src",
+    "worker/tests",
+    "vitest.config.ts"
+  ]
+}

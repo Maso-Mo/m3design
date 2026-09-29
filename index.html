@@ -1,13 +1,61 @@
 <!doctype html>
-<html lang="en">
+<html lang="fr">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/images/branding/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>m3design</title>
+    <title>M3Design — Architecture</title>
+    <meta
+      name="description"
+      content="M3Design, entreprise d'architecture : présentation, services, projets, processus et demande d'information."
+    />
+    <meta
+      name="theme-color"
+      content="#ffffff"
+      media="(prefers-color-scheme: light)"
+    />
+    <meta
+      name="theme-color"
+      content="#0a0a0b"
+      media="(prefers-color-scheme: dark)"
+    />
+
+    <!--
+      Thème appliqué AVANT le premier rendu, pour éviter tout flash de thème au
+      chargement : ce script lit le choix mémorisé (clé « m3design-theme »), à
+      défaut la préférence du système, puis pose la classe et l'attribut sur
+      <html>. Le script reste volontairement minuscule, synchrone et sans
+      dépendance : il doit s'exécuter avant que la feuille de style n'affiche
+      quoi que ce soit. La logique correspondante côté React est dans
+      src/lib/theme.ts, qui lit l'attribut data-theme déjà posé ici.
+    -->
+    <script>
+      ;(() => {
+        var theme
+        try {
+          theme = localStorage.getItem('m3design-theme')
+        } catch (error) {
+          // Stockage refusé (navigation privée) : la préférence système suffit.
+        }
+        if (theme !== 'light' && theme !== 'dark') {
+          theme = window.matchMedia('(prefers-color-scheme: dark)').matches
+            ? 'dark'
+            : 'light'
+        }
+        var root = document.documentElement
+        root.classList.toggle('dark', theme === 'dark')
+        root.dataset.theme = theme
+      })()
+    </script>
   </head>
   <body>
     <div id="root"></div>
+    <noscript>
+      <p>
+        Ce site nécessite JavaScript pour s'afficher. Merci de l'activer dans
+        votre navigateur.
+      </p>
+    </noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

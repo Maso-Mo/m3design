@@ -1,1 +1,863 @@
+/* ---------------------------------------------------------------------------
+   M3Design — point d'entrée Tailwind et socle visuel
+   ---------------------------------------------------------------------------
+   Tailwind CSS 4 se configure ici, en CSS. Ce fichier contient, dans l'ordre :
+     1. le branchement de Tailwind et la variante de thème sombre ;
+     2. les échelles du design system (typographie, rythme, rayons, ombres) ;
+     3. les jetons de couleur, définis DEUX FOIS (clair et sombre) ;
+     4. les styles de base (fond, texte, ancres, sélection, focus).
+
+   Règle de composition : les composants n'emploient que les jetons sémantiques
+   (`bg-canvas`, `text-muted`, `border-line`, `text-accent-ink`…) et jamais une
+   couleur en dur. Changer un thème, ou la teinte d'accent, se fait donc ici et
+   nulle part ailleurs.
+   --------------------------------------------------------------------------- */
+
 @import 'tailwindcss';
+
+/* ---------------------------------------------------------------------------
+   1. Thème sombre piloté par une CLASSE (.dark sur <html>), et non par la seule
+   préférence système : le sélecteur de thème du site doit pouvoir l'imposer.
+   La classe est posée avant le premier rendu par le script de index.html, puis
+   maintenue par src/lib/theme.ts.
+   --------------------------------------------------------------------------- */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ---------------------------------------------------------------------------
+   2. Échelles du design system
+   --------------------------------------------------------------------------- */
+@theme {
+  /* Deux familles, une intention : une pile SERIF pour les titres (registre
+     éditorial, plans et rendus d'architecture) et une pile SANS pour le texte
+     courant. Aucun fichier de police n'étant fourni dans le dépôt, ces piles
+     s'appuient sur les polices du système : aucun appel réseau, donc aucun
+     clignotement de police au chargement. Le jour où des polices de marque
+     seront livrées, seules ces deux lignes changent. */
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, sans-serif;
+  --font-display:
+    ui-serif, 'Iowan Old Style', 'Palatino Linotype', Palatino,
+    'Times New Roman', serif;
+
+  /* Surtitre : petites capitales espacées, en haut de section. */
+  --text-eyebrow: 0.6875rem;
+  --text-eyebrow--line-height: 1;
+  --text-eyebrow--letter-spacing: 0.22em;
+  --text-eyebrow--font-weight: 500;
+
+  /* Titres. Les tailles sont fluides (clamp) : un seul jeu de classes suffit du
+     mobile au grand écran, et le rendu reste maîtrisé sur les écrans larges. */
+  --text-display-sm: clamp(1.5rem, 1.15rem + 1.5vw, 2.125rem);
+  --text-display-sm--line-height: 1.18;
+  --text-display-sm--letter-spacing: -0.01em;
+
+  --text-display: clamp(2rem, 1.35rem + 3vw, 3.5rem);
+  --text-display--line-height: 1.06;
+  --text-display--letter-spacing: -0.02em;
+
+  --text-display-lg: clamp(2.5rem, 1.1rem + 5.4vw, 5rem);
+  --text-display-lg--line-height: 0.98;
+  --text-display-lg--letter-spacing: -0.03em;
+
+  /* Rythme horizontal et vertical : hauteur de barre de navigation, respiration
+     entre deux sections, largeurs de contenu. */
+  --spacing-header: 4.5rem;
+  --spacing-section: clamp(4.5rem, 7vw, 8rem);
+
+  --container-narrow: 48rem;
+  --container-content: 78rem;
+  --container-wide: 90rem;
+
+  /* Angles : quasi droits. Le dessin d'architecture se tient à l'équerre ; les
+     seuls arrondis francs sont réservés aux pastilles rondes. */
+  --radius-brand: 2px;
+
+  /* Mouvement : une seule courbe, lente au départ puis décidée. */
+  --ease-editorial: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* Ombres discrètes, réservées aux surfaces qui doivent se détacher. En thème
+     sombre, la séparation passe par `border-line`, pas par l'ombre. */
+  --shadow-soft:
+    0 1px 2px rgb(9 9 11 / 0.06), 0 12px 32px -16px rgb(9 9 11 / 0.18);
+  --shadow-lift:
+    0 2px 4px rgb(9 9 11 / 0.08), 0 28px 64px -28px rgb(9 9 11 / 0.3);
+}
+
+/* ---------------------------------------------------------------------------
+   3. Jetons de couleur
+   ---------------------------------------------------------------------------
+   Les valeurs sont déclarées dans :root (clair) et .dark (sombre), puis
+   exposées à Tailwind via `@theme inline` : les utilitaires compilés pointent
+   donc vers la variable, et basculent avec le thème sans recompilation.
+
+   Palette : blanc, noir et gris neutres, et le ROUGE de la marque (#ff1018,
+   relevé sur le favicon officiel) comme unique accent. Aucun doré.
+   Deux rouges distincts à dessein : `--accent` (fond de bouton, contraste
+   suffisant avec du texte blanc) et `--accent-ink` (rouge employé COMME texte,
+   contraste suffisant sur le fond de chaque thème).
+   --------------------------------------------------------------------------- */
+:root {
+  --canvas: oklch(100% 0 0);
+  --surface: oklch(97.7% 0.002 265);
+  --elevated: oklch(100% 0 0);
+  --line: oklch(92% 0.004 265);
+  --line-strong: oklch(84% 0.006 265);
+  --ink-strong: oklch(15% 0 0);
+  --ink-muted: oklch(45% 0.006 265);
+  --ink-subtle: oklch(56% 0.006 265);
+
+  --brand: #ff1018;
+  --accent: #e20a11;
+  --accent-hover: #c0080e;
+  --accent-ink: #c40a10;
+  --accent-contrast: #ffffff;
+  --accent-soft: color-mix(in oklab, #ff1018 7%, transparent);
+
+  color-scheme: light;
+}
+
+.dark {
+  --canvas: oklch(14.5% 0.003 265);
+  --surface: oklch(18% 0.004 265);
+  --elevated: oklch(21.5% 0.004 265);
+  --line: oklch(27% 0.005 265);
+  --line-strong: oklch(36% 0.006 265);
+  --ink-strong: oklch(97.5% 0 0);
+  --ink-muted: oklch(75% 0.006 265);
+  --ink-subtle: oklch(58% 0.008 265);
+
+  --accent: #e20a11;
+  --accent-hover: #ff2b31;
+  --accent-ink: #ff6b6f;
+  --accent-contrast: #ffffff;
+  --accent-soft: color-mix(in oklab, #ff1018 16%, transparent);
+
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-elevated: var(--elevated);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-strong: var(--ink-strong);
+  --color-muted: var(--ink-muted);
+  --color-subtle: var(--ink-subtle);
+  --color-brand: var(--brand);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-contrast: var(--accent-contrast);
+  --color-accent-soft: var(--accent-soft);
+}
+
+/* ---------------------------------------------------------------------------
+   4. Styles de base
+   --------------------------------------------------------------------------- */
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    /* Défilement doux vers les ancres, et dégagement sous la barre de
+       navigation collante : sans lui, un titre de section arriverait caché
+       derrière l'en-tête après un clic sur un lien d'ancrage. */
+    scroll-behavior: smooth;
+    scroll-padding-top: calc(var(--spacing-header) + 1.5rem);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+  }
+
+  body {
+    background-color: var(--canvas);
+    color: var(--ink-strong);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    font-weight: 400;
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  /* Le focus clavier est toujours visible, et toujours de la couleur de la
+     marque : c'est le seul endroit où le rouge apparaît sans être demandé. */
+  :focus-visible {
+    outline: 2px solid var(--accent-ink);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background-color: var(--accent);
+    color: var(--accent-contrast);
+  }
+
+  img,
+  picture,
+  svg {
+    display: block;
+    max-width: 100%;
+  }
+
+  /* Les titres de section servent de cible d'ancrage : ils ne doivent jamais
+     se glisser sous la barre de navigation. */
+  section[id],
+  [data-anchor] {
+    scroll-margin-top: calc(var(--spacing-header) + 1rem);
+  }
+}
+
+@layer utilities {
+  /* Trait de séparation fin, à la même épaisseur partout. */
+  .rule {
+    border-top: 1px solid var(--line);
+  }
+
+  /* Profondeur du Hero : les positions de mise en page restent intactes. Seuls
+     ces calques internes reçoivent les variables écrites au plus une fois par
+     frame par useHeroMotion. */
+  .hero-parallax-layer {
+    --hero-background-scale: 1.015;
+    transform: translate3d(0, var(--hero-background-y, 0px), 0)
+      scale(var(--hero-background-scale));
+    transform-origin: center center;
+  }
+
+  .hero-wordmark-motion {
+    transform: translate3d(
+        var(--hero-wordmark-pointer-x, 0px),
+        calc(var(--hero-wordmark-y, 0px) + var(--hero-wordmark-pointer-y, 0px)),
+        0
+      )
+      scale(var(--hero-wordmark-scale, 1));
+    transform-origin: center center;
+    opacity: var(--hero-wordmark-opacity, 1);
+  }
+
+  .hero-editorial-motion {
+    translate: 0 var(--hero-editorial-y, 0px);
+  }
+
+  .is-hero-motion-active .hero-parallax-layer,
+  .is-hero-motion-active .hero-wordmark-motion {
+    will-change: transform;
+  }
+
+  .is-hero-motion-active .hero-editorial-motion {
+    will-change: translate;
+  }
+
+  /* Le texte HTML demeure le rendu principal. Le pseudo-élément ajoute une
+     matière architecturale légère, sans canvas ni second contenu accessible. */
+  .hero-wordmark-token {
+    position: relative;
+    display: inline-block;
+  }
+
+  .hero-wordmark-token::after {
+    position: absolute;
+    inset: 0;
+    color: transparent;
+    content: attr(data-wordmark);
+    pointer-events: none;
+    background-image:
+      radial-gradient(
+        circle 28% at var(--hero-pointer-x, 50%) var(--hero-pointer-y, 50%),
+        var(--wordmark-glint) 0%,
+        transparent 72%
+      ),
+      repeating-linear-gradient(
+        108deg,
+        transparent 0 22%,
+        var(--wordmark-line) 24%,
+        transparent 26% 48%
+      );
+    background-position:
+      0 0,
+      -120% 0;
+    background-size:
+      100% 100%,
+      240% 100%;
+    background-clip: text;
+    opacity: 0;
+    transition: opacity 280ms var(--ease-editorial);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .hero-wordmark-m3 {
+    --wordmark-glint: rgb(255 255 255 / 0.62);
+    --wordmark-line: rgb(255 255 255 / 0.24);
+  }
+
+  .hero-wordmark-design {
+    --wordmark-glint: color-mix(in oklab, var(--ink-strong) 62%, transparent);
+    --wordmark-line: color-mix(in oklab, var(--ink-strong) 24%, transparent);
+  }
+
+  .is-wordmark-motion-active .hero-wordmark-token::after {
+    opacity: 0.42;
+    animation: hero-wordmark-scan 7s linear infinite;
+  }
+
+  .hero-statement {
+    position: relative;
+    isolation: isolate;
+  }
+
+  /* Sur mobile uniquement, la lecture du bloc éditorial est soutenue par un
+     voile local qui disparaît avant le sujet. Le calque est absent en sombre et
+     dès le breakpoint desktop, où la composition validée reste inchangée. */
+  .hero-mobile-contrast {
+    background: linear-gradient(
+      90deg,
+      rgb(255 255 255 / 0.76) 0%,
+      rgb(255 255 255 / 0.48) 52%,
+      rgb(255 255 255 / 0) 100%
+    );
+  }
+
+  /* Le paragraphe du Hero mobile devient une petite surface éditoriale : la
+     photographie reste perceptible, mais ne traverse plus les glyphes avec ses
+     valeurs claires et sombres. Le desktop conserve son rendu sans panneau. */
+  @media (max-width: 47.999rem) {
+    .hero-description-panel {
+      align-self: center;
+      width: 90%;
+      max-width: 26rem;
+      padding: 0.75rem 0.875rem;
+      border: 1px solid rgb(17 17 17 / 0.1);
+      border-radius: 2px;
+      background: rgb(250 250 248 / 0.82);
+      color: #171717;
+      font-size: clamp(0.9375rem, 0.9rem + 0.2vw, 1rem);
+      line-height: 1.5;
+      text-align: center;
+    }
+
+    .dark .hero-description-panel {
+      border-color: rgb(255 255 255 / 0.13);
+      background: rgb(10 10 10 / 0.76);
+      color: #f5f5f5;
+    }
+
+    .hero-intro-slogan {
+      align-items: center;
+    }
+
+    .hero-intro-slogan > p {
+      text-align: center;
+    }
+
+    .hero-intro-slogan > p > span {
+      align-items: center;
+    }
+  }
+
+  .contact-field[aria-invalid='true'] {
+    border-color: var(--accent-ink);
+    box-shadow: 0 0 0 1px
+      color-mix(in oklab, var(--accent-ink) 24%, transparent);
+  }
+
+  /* Reveals éditoriaux : préparés par un unique IntersectionObserver. Sans
+     JavaScript, aucune règle `reveal-ready` n'est ajoutée et tout reste visible. */
+  .reveal-ready[data-reveal] {
+    opacity: 0;
+    transform: translate3d(0, 1rem, 0);
+    transition:
+      opacity 450ms var(--ease-editorial),
+      transform 500ms var(--ease-editorial),
+      clip-path 500ms var(--ease-editorial);
+    transition-delay: var(--reveal-delay, 0ms);
+    will-change: opacity, transform;
+  }
+
+  .reveal-ready[data-reveal='image'] {
+    clip-path: none;
+    transform: translate3d(0, 0.75rem, 0);
+  }
+
+  /* Processus desktop : l'ancienne et la nouvelle image forment une seule
+     transition, dont le sens dépend de l'index précédent et du nouvel index. */
+  .process-stage-image {
+    opacity: 0;
+    transform: translate3d(0, 0, 0) scale(0.985);
+  }
+
+  .process-stage-image.is-process-active {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+
+  .process-stage-image.is-process-entering-forward {
+    animation: process-enter-forward 720ms var(--ease-editorial) both;
+  }
+
+  .process-stage-image.is-process-leaving-forward {
+    animation: process-leave-forward 720ms var(--ease-editorial) both;
+  }
+
+  .process-stage-image.is-process-entering-backward {
+    animation: process-enter-backward 720ms var(--ease-editorial) both;
+  }
+
+  .process-stage-image.is-process-leaving-backward {
+    animation: process-leave-backward 720ms var(--ease-editorial) both;
+  }
+
+  /* Processus mobile/tablette : pas de sticky ni de double calque. L'image
+     entre dans le sens du parcours courant, avec une amplitude très réduite. */
+  .process-inline-image {
+    --process-inline-shift: 1.5rem;
+    opacity: 0;
+    transform: translate3d(var(--process-inline-shift), 0, 0);
+    transition:
+      opacity 400ms var(--ease-editorial),
+      transform 440ms var(--ease-editorial);
+  }
+
+  .process-inline-image[data-process-navigation-direction='backward'] {
+    --process-inline-shift: -1.5rem;
+  }
+
+  .process-inline-image.is-process-visible {
+    opacity: 1;
+    transform: none;
+  }
+
+  .process-inline-image.is-process-resetting {
+    transition: none;
+  }
+
+  .reveal-ready[data-reveal='line-x'],
+  .reveal-ready[data-reveal='line-y'] {
+    opacity: 1;
+    transition-duration: 500ms;
+  }
+
+  .reveal-ready[data-reveal='line-x'] {
+    transform: scaleX(0);
+  }
+
+  .reveal-ready[data-reveal='line-y'] {
+    transform: scaleY(0);
+  }
+
+  .reveal-ready.is-revealed[data-reveal] {
+    opacity: 1;
+    clip-path: inset(0);
+    transform: none;
+    will-change: auto;
+  }
+
+  [data-reveal-delay='1'] {
+    --reveal-delay: 80ms;
+  }
+
+  [data-reveal-delay='2'] {
+    --reveal-delay: 160ms;
+  }
+
+  [data-reveal-delay='3'] {
+    --reveal-delay: 240ms;
+  }
+
+  [data-reveal-delay='4'] {
+    --reveal-delay: 320ms;
+  }
+
+  @media (min-width: 48rem) {
+    .hero-parallax-layer {
+      --hero-background-scale: 1.025;
+    }
+
+    .reveal-ready[data-reveal] {
+      transform: translate3d(0, 1.125rem, 0);
+      transition-duration: 620ms, 680ms, 720ms;
+    }
+
+    .reveal-ready[data-reveal='image'] {
+      clip-path: none;
+      transform: translate3d(0, 1rem, 0);
+    }
+
+    .process-inline-image {
+      --process-inline-shift: 3rem;
+      transition-duration: 500ms, 560ms;
+    }
+
+    .process-inline-image[data-process-navigation-direction='backward'] {
+      --process-inline-shift: -3rem;
+    }
+
+    .reveal-ready[data-reveal='line-x'],
+    .reveal-ready[data-reveal='line-y'] {
+      transition-duration: 720ms;
+    }
+
+    [data-reveal-delay='1'] {
+      --reveal-delay: 80ms;
+    }
+
+    [data-reveal-delay='2'] {
+      --reveal-delay: 160ms;
+    }
+
+    [data-reveal-delay='3'] {
+      --reveal-delay: 240ms;
+    }
+
+    [data-reveal-delay='4'] {
+      --reveal-delay: 320ms;
+    }
+  }
+
+  @media (min-width: 80rem) {
+    .hero-parallax-layer {
+      --hero-background-scale: 1.035;
+    }
+
+    .reveal-ready[data-reveal] {
+      transform: translate3d(0, 1.25rem, 0);
+      transition-duration: 700ms, 800ms, 900ms;
+    }
+
+    .reveal-ready[data-reveal='image'] {
+      clip-path: inset(0 0 8% 0);
+      transform: scale(1.018);
+    }
+
+    .reveal-ready[data-reveal='line-x'],
+    .reveal-ready[data-reveal='line-y'] {
+      transition-duration: 900ms;
+    }
+
+    [data-reveal-delay='1'] {
+      --reveal-delay: 80ms;
+    }
+
+    [data-reveal-delay='2'] {
+      --reveal-delay: 160ms;
+    }
+
+    [data-reveal-delay='3'] {
+      --reveal-delay: 240ms;
+    }
+
+    [data-reveal-delay='4'] {
+      --reveal-delay: 320ms;
+    }
+  }
+
+  @keyframes hero-photo-intro {
+    from {
+      transform: scale(1.035);
+    }
+    to {
+      transform: scale(1);
+    }
+  }
+
+  @keyframes hero-veil-intro {
+    from {
+      opacity: 0.35;
+    }
+    to {
+      opacity: 0;
+    }
+  }
+
+  @keyframes hero-wordmark-reveal {
+    from {
+      opacity: 0;
+      clip-path: inset(0 100% 0 0);
+      translate: -0.35em 0;
+    }
+    to {
+      opacity: 1;
+      clip-path: inset(0);
+      translate: 0 0;
+    }
+  }
+
+  @keyframes hero-intro-block {
+    from {
+      opacity: 0;
+      transform: translate3d(0, 0.875rem, 0);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  @keyframes hero-intro-line {
+    from {
+      opacity: 0;
+      transform: scaleX(0);
+    }
+    to {
+      opacity: 1;
+      transform: scaleX(1);
+    }
+  }
+
+  @keyframes process-enter-forward {
+    from {
+      opacity: 0;
+      transform: translate3d(4rem, 0, 0) scale(1.015);
+    }
+    to {
+      opacity: 1;
+      transform: translate3d(0, 0, 0) scale(1);
+    }
+  }
+
+  @keyframes process-leave-forward {
+    from {
+      opacity: 1;
+      transform: translate3d(0, 0, 0) scale(1);
+    }
+    to {
+      opacity: 0;
+      transform: translate3d(-4rem, 0, 0) scale(0.985);
+    }
+  }
+
+  @keyframes process-enter-backward {
+    from {
+      opacity: 0;
+      transform: translate3d(-4rem, 0, 0) scale(1.015);
+    }
+    to {
+      opacity: 1;
+      transform: translate3d(0, 0, 0) scale(1);
+    }
+  }
+
+  @keyframes process-leave-backward {
+    from {
+      opacity: 1;
+      transform: translate3d(0, 0, 0) scale(1);
+    }
+    to {
+      opacity: 0;
+      transform: translate3d(4rem, 0, 0) scale(0.985);
+    }
+  }
+
+  @keyframes hero-wordmark-scan {
+    from {
+      background-position:
+        0 0,
+        -120% 0;
+    }
+    to {
+      background-position:
+        0 0,
+        120% 0;
+    }
+  }
+
+  @keyframes state-enter {
+    from {
+      opacity: 0;
+      transform: translate3d(0, 0.6rem, 0);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  .hero-photo-intro {
+    animation: hero-photo-intro 1450ms var(--ease-editorial) both;
+  }
+
+  .hero-intro-veil {
+    animation: hero-veil-intro 1450ms var(--ease-editorial) both;
+  }
+
+  .hero-wordmark-intro-m3 {
+    animation: hero-wordmark-reveal 950ms var(--ease-editorial) 150ms both;
+  }
+
+  .hero-wordmark-intro-design {
+    animation: hero-wordmark-reveal 950ms var(--ease-editorial) 300ms both;
+  }
+
+  .hero-intro-block {
+    animation: hero-intro-block 650ms var(--ease-editorial) both;
+  }
+
+  .hero-intro-disciplines {
+    animation-delay: 450ms;
+  }
+
+  .hero-intro-headline {
+    animation-delay: 550ms;
+  }
+
+  .hero-intro-description,
+  .hero-intro-rule {
+    animation-delay: 650ms;
+  }
+
+  .hero-intro-actions {
+    animation-delay: 750ms;
+  }
+
+  .hero-intro-slogan {
+    animation-delay: 850ms;
+  }
+
+  .hero-intro-line {
+    transform-origin: left;
+    animation: hero-intro-line 650ms var(--ease-editorial) both;
+  }
+
+  .hero-intro-closing {
+    animation-delay: 950ms;
+  }
+
+  .state-enter,
+  .menu-enter,
+  .lightbox-enter,
+  .lightbox-image-enter {
+    animation: state-enter 450ms var(--ease-editorial) both;
+  }
+
+  .lightbox-enter {
+    animation-duration: 280ms;
+  }
+
+  .lightbox-image-enter {
+    animation-duration: 420ms;
+  }
+
+  @media (max-width: 47.999rem) {
+    .hero-photo-intro,
+    .hero-intro-veil {
+      animation-duration: 1000ms;
+    }
+
+    .hero-wordmark-intro-m3 {
+      animation-duration: 620ms;
+      animation-delay: 80ms;
+    }
+
+    .hero-wordmark-intro-design {
+      animation-duration: 620ms;
+      animation-delay: 150ms;
+    }
+
+    .hero-intro-block,
+    .hero-intro-line {
+      animation-duration: 460ms;
+    }
+
+    .hero-intro-disciplines {
+      animation-delay: 180ms;
+    }
+
+    .hero-intro-headline {
+      animation-delay: 260ms;
+    }
+
+    .hero-intro-description,
+    .hero-intro-rule {
+      animation-delay: 330ms;
+    }
+
+    .hero-intro-actions {
+      animation-delay: 400ms;
+    }
+
+    .hero-intro-slogan {
+      animation-delay: 470ms;
+    }
+
+    .hero-intro-closing {
+      animation-delay: 540ms;
+    }
+
+    .lightbox-image-enter {
+      animation-duration: 350ms;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hero-parallax-layer,
+    .hero-wordmark-motion,
+    .hero-editorial-motion {
+      transform: none;
+      translate: none;
+      opacity: 1;
+      will-change: auto;
+    }
+
+    .hero-wordmark-token::after,
+    .is-wordmark-motion-active .hero-wordmark-token::after {
+      opacity: 0;
+      animation: none;
+      transition: none;
+    }
+
+    .reveal-ready[data-reveal],
+    .reveal-ready.is-revealed[data-reveal] {
+      opacity: 1;
+      clip-path: none;
+      transform: none;
+      transition: none;
+      will-change: auto;
+    }
+
+    .hero-photo-intro,
+    .hero-intro-veil,
+    .hero-wordmark-intro-m3,
+    .hero-wordmark-intro-design,
+    .hero-intro-block,
+    .hero-intro-line,
+    .process-stage-image,
+    .state-enter,
+    .menu-enter,
+    .lightbox-enter,
+    .lightbox-image-enter {
+      animation: none;
+    }
+
+    .hero-intro-veil {
+      opacity: 0;
+    }
+
+    .process-stage-image {
+      opacity: 0;
+      transform: none;
+    }
+
+    .process-stage-image.is-process-active {
+      opacity: 1;
+    }
+
+    .process-inline-image,
+    .process-inline-image.is-process-visible {
+      opacity: 1;
+      transform: none;
+      transition: none;
+    }
+  }
+}

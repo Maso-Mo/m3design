@@ -14,6 +14,12 @@ coverage/
 # Types du runtime Workers, générés par `pnpm generate:types` (wrangler)
 worker-configuration.d.ts
 
+# Migrations D1 : ces fichiers sont appliqués tels quels par wrangler et sont
+# commentés à la main (contraintes, index, déclencheurs). Prettier ne sait pas
+# formater du SQL : ils sont exclus pour qu'un `prettier --write .` ne les
+# réécrive jamais.
+worker/migrations/*.sql
+
 # Assets binaires (aucun formatage possible)
 public/images/
 src/assets/

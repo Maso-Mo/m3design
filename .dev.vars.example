@@ -1,38 +1,93 @@
 # ---------------------------------------------------------------------------
-# M3Design — configuration et secrets du SERVEUR (Worker Cloudflare)
+# M3Design — modèle de configuration du SERVEUR (Worker Cloudflare)
 # ---------------------------------------------------------------------------
-# Fichier modèle : il ne contient AUCUNE valeur.
-#   - développement local : copier en .dev.vars (ignoré par Git) puis renseigner.
+# Fichier MODÈLE : il ne contient AUCUNE valeur.
+#   - développement local : copier en .dev.vars (ignoré par Git) puis renseigner ;
 #   - production : ne jamais committer de valeur ; utiliser la commande
 #     wrangler secret put <NOM> pour les secrets, et la section vars de
 #     wrangler.jsonc pour le non sensible.
 #
-# Préparé pour l'étape backend. Les noms sont provisoires : ils seront figés
-# lors du choix du fournisseur WhatsApp.
+# Les noms listés ici sont ceux que lit réellement le code :
+#   worker/src/services/notifications.ts   (boîte de réception des demandes)
+#   worker/src/providers/email-provider.ts (fournisseur d'envoi)
+#   worker/src/services/email-dispatch.ts  (traitement de la file)
+#   worker/src/services/abuse-guard.ts     (anti-abus des formulaires)
+#
+# Depuis la V1, il n'y a PLUS de vérification par code : aucune variable OTP ni
+# WhatsApp n'existe plus. Le parcours est un simple formulaire protégé par la
+# validation, la limitation de débit et, si besoin, un défi anti-robot.
 
 # --- Environnement ---
 # Valeurs attendues : development | staging | production
 ENVIRONMENT=
 
-# --- Vérification du numéro par code reçu sur WhatsApp ---
-# Fournisseur chargé de l'envoi des codes.
-#   - console : fournisseur fictif, journalise le code. RÉSERVÉ AU DÉVELOPPEMENT
-#     ET AUX TESTS. Le serveur doit REFUSER cette valeur lorsque ENVIRONMENT
-#     vaut production : aucune vérification factice ne doit aboutir en ligne.
-#   - autre valeur : fournisseur réel, restant à sélectionner.
-WHATSAPP_PROVIDER=
+# --- Notification des demandes reçues ---
+# Boîte de M3Design prévenue à chaque demande de devis ou message de contact. La
+# notification est écrite dans la file `email_outbox` (le même lot que la demande,
+# donc en tout ou rien) ; son envoi effectif est assuré par le traitement périodique
+# de la file (worker/src/scheduled.ts), réessayable.
+# OBLIGATOIRE : sans elle, une demande enregistrée ne serait vue par personne, et la
+# soumission est refusée en 503 AVANT toute écriture.
+# Remplacer cette adresse ne demande aucune modification du code : elle est lue ici,
+# et recopiée sur chaque notification au moment de sa mise en file (une notification
+# déjà en file garde le destinataire de sa création).
+# Pendant la mise en service, la valeur est TEMPORAIRE (voir .dev.vars, non
+# versionné) ; elle deviendra l'adresse officielle de M3Design.
+NOTIFICATION_EMAIL=
 
-# Secret servant au hachage des codes et à la signature des jetons de
-# vérification. Chaîne aléatoire longue, distincte par environnement.
-OTP_SECRET=
+# --- Envoi des notifications par courriel ---
+# Fournisseur d'envoi. Deux valeurs acceptées, aucune valeur par défaut :
+#   - resend     : API HTTP de Resend. CHOIX RETENU pour les premiers tests (offre
+#                  gratuite, une seule clé à gérer, aucun domaine à vérifier tant
+#                  qu'on écrit à l'adresse du compte) ;
+#   - cloudflare : binding `send_email` d'Email Routing (gratuit, sans tiers, mais
+#                  exige un domaine géré par Cloudflare, Email Routing actif, une
+#                  adresse d'expédition créée et un destinataire VÉRIFIÉ).
+# Toute autre valeur est REFUSÉE, y compris les noms de doubles de test (console,
+# fake, mock, mailhog…) : un fournisseur fictif accepterait tout sans rien envoyer,
+# et personne ne serait prévenu. Les tests injectent leur propre fournisseur.
+EMAIL_PROVIDER=
 
-# Durée de validité d'un code, en secondes.
-OTP_TTL_SECONDS=
+# Adresse d'expédition, sur un domaine autorisé par le fournisseur choisi.
+#   - resend     : domaine vérifié chez Resend, ou `onboarding@resend.dev` en mode
+#                  test (Resend n'écrit alors qu'à l'adresse du compte) ;
+#   - cloudflare : adresse créée dans « Email Routing > Email Addresses ».
+# En minuscules, sans nom affiché : le nom se met dans EMAIL_FROM_NAME.
+EMAIL_FROM_ADDRESS=
 
-# Nombre maximal de tentatives de saisie pour un même code.
-OTP_MAX_ATTEMPTS=
+# Nom affiché de l'expéditeur (facultatif). Jamais de chevrons ni de guillemets.
+EMAIL_FROM_NAME=
 
-# --- Accès au fournisseur WhatsApp (noms à confirmer selon le fournisseur) ---
-WHATSAPP_ACCESS_TOKEN=
-WHATSAPP_PHONE_NUMBER_ID=
-WHATSAPP_VERIFY_TOKEN=
+# Clé d'API Resend. SECRET : à poser par `wrangler secret put RESEND_API_KEY`,
+# jamais dans wrangler.jsonc. Une clé refusée produit un refus d'authentification
+# (code technique `auth_failed`).
+RESEND_API_KEY=
+
+# Délai maximal d'un appel au fournisseur, en millisecondes (1000 à 30000).
+# Variable optionnelle : une valeur absente ou vide garde la valeur par défaut.
+EMAIL_TIMEOUT_MS=
+
+# --- Protection des formulaires publics ---
+# Secret de hachage des empreintes de limitation (adresse réseau, adresse
+# électronique, téléphone). SECRET : à poser par `wrangler secret put`, jamais dans
+# wrangler.jsonc. En local, générer une valeur aléatoire longue, par exemple
+#   openssl rand -hex 32
+# OBLIGATOIRE : sans ce secret, les formulaires publics répondent 503 plutôt que de
+# laisser passer des soumissions sans aucun contrôle. Il doit être DIFFÉRENT par
+# environnement (une empreinte calculée en développement ne doit pas être
+# comparable à une empreinte de production).
+RATE_LIMIT_SECRET=
+
+# Secret du défi Turnstile (Cloudflare), FACULTATIF : son absence désactive le défi,
+# ce qui est l'état souhaité en développement local. Le jour où le widget sera posé
+# sur le formulaire React, renseigner cette variable active la vérification
+# `challenge_failed` côté serveur, sans changement de code.
+TURNSTILE_SECRET=
+
+# --- Réglages du traitement de la file des notifications (optionnels) ---
+# Nombre maximal de tentatives d'envoi par notification (1 à 20), et nombre
+# d'entrées traitées par passage (1 à 50). Une valeur absente ou vide garde la
+# valeur par défaut du code (5 tentatives, 10 par passage). Une valeur mal formée
+# est REFUSÉE : le passage est annulé et le motif est journalisé.
+EMAIL_MAX_ATTEMPTS=
+EMAIL_DISPATCH_BATCH_SIZE=
