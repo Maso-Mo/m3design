@@ -66,18 +66,27 @@ export function GuaranteeSection() {
                 key={principle.id}
                 data-reveal="up"
                 data-reveal-delay={String(Math.min(index + 1, 3))}
-                className="border-line relative border-b"
+                className="group border-line relative overflow-hidden border-b"
               >
+                <span
+                  aria-hidden="true"
+                  className="bg-accent-soft absolute inset-0 origin-left scale-x-0 transition-transform duration-500 ease-editorial group-hover:scale-x-100 motion-reduce:transition-none"
+                />
+                <span
+                  aria-hidden="true"
+                  className="absolute inset-y-0 left-0 w-px origin-bottom scale-y-0 bg-brand transition-transform duration-300 ease-editorial group-hover:scale-y-100 motion-reduce:transition-none"
+                />
+
                 <div className="relative grid grid-cols-[3.5rem_1fr] gap-x-4 gap-y-5 py-8 sm:grid-cols-[5.5rem_minmax(12rem,0.7fr)_minmax(0,1fr)] sm:items-center sm:gap-8 sm:py-10 lg:grid-cols-[7rem_minmax(16rem,0.7fr)_minmax(0,1fr)] lg:py-12">
-                  <p className="text-subtle pl-3 font-display text-4xl font-light sm:text-5xl lg:text-6xl">
+                  <p className="text-subtle pl-3 font-display text-4xl font-light transition-colors duration-300 ease-editorial group-hover:text-accent-ink motion-reduce:transition-none sm:text-5xl lg:text-6xl">
                     {String(index + 1).padStart(2, '0')}
                   </p>
 
-                  <h3 className="text-strong font-display text-2xl uppercase sm:text-3xl lg:text-4xl">
+                  <h3 className="text-strong font-display text-2xl uppercase transition-transform duration-300 ease-editorial group-hover:translate-x-2 motion-reduce:transform-none motion-reduce:transition-none sm:text-3xl lg:text-4xl">
                     {principle.title}
                   </h3>
 
-                  <p className="text-muted col-start-2 max-w-xl text-sm leading-7 sm:col-start-3 sm:text-base sm:leading-8">
+                  <p className="text-muted col-start-2 max-w-xl text-sm leading-7 transition-[color,transform] duration-300 ease-editorial group-hover:translate-x-2 group-hover:text-strong motion-reduce:transform-none motion-reduce:transition-none sm:col-start-3 sm:text-base sm:leading-8">
                     {principle.description}
                   </p>
                 </div>
