@@ -38,9 +38,7 @@ export function useScrollReveal() {
       observer = new IntersectionObserver(
         (entries) => {
           for (const entry of entries) {
-            if (!entry.isIntersecting) continue
-            entry.target.classList.add('is-revealed')
-            observer?.unobserve(entry.target)
+            entry.target.classList.toggle('is-revealed', entry.isIntersecting)
           }
         },
         { rootMargin: '0px 0px -10% 0px', threshold: 0.08 },
@@ -51,9 +49,8 @@ export function useScrollReveal() {
         const bounds = element.getBoundingClientRect()
         if (bounds.top < window.innerHeight * 0.9 && bounds.bottom > 0) {
           element.classList.add('is-revealed')
-        } else {
-          observer.observe(element)
         }
+        observer.observe(element)
       }
     }
 
