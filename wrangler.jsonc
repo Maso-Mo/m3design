@@ -44,7 +44,9 @@
   // celles qui ont échoué, abandonne celles qui dépassent le plafond de tentatives
   // et purge les notifications acceptées depuis plus de trente jours.
   //
-  // Aucune route HTTP ne déclenche d'envoi : c'est le SEUL chemin.
+  // Exception volontaire : le lien magique Contact, valable cinq minutes, est
+  // envoyé immédiatement par la route HTTP. Les notifications finales destinées
+  // à M3Design restent exclusivement traitées ici via l'outbox.
   //
   // Si l'envoi n'est pas configuré (EMAIL_PROVIDER, adresse d'expédition, clé ou
   // binding absent), le passage est ANNULÉ avant toute écriture : les notifications
@@ -97,8 +99,8 @@
       "d1_databases": [
         {
           "binding": "DB",
-          "database_name": "m3design-production",
-          "database_id": "REMPLACER_ID_BASE_PRODUCTION",
+          "database_name": "m3design-prod",
+          "database_id": "ce4dda81-3479-4ddf-ad91-dc1625d18488",
           "migrations_dir": "worker/migrations",
         },
       ],

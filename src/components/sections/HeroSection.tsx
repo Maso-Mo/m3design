@@ -3,6 +3,7 @@ import { ArrowRight, Play } from 'lucide-react'
 import { actions, getSection, hero } from '../../data/site'
 import { useHeroMotion } from '../../hooks/useHeroMotion'
 import { cn } from '../../lib/cn'
+import { ArchitectCompassTrail } from '../hero/ArchitectCompassTrail'
 import { ButtonLink } from '../ui/Button'
 import { Container } from '../ui/Container'
 
@@ -307,6 +308,7 @@ export function HeroSection() {
                 Design
               </span>
             </p>
+            <ArchitectCompassTrail targetRef={wordmarkRef} />
           </div>
 
           {/* 3 et 4. Le bloc éditorial et le manifeste : sur la même ligne en
